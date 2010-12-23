@@ -81,10 +81,13 @@ def search(price=(0,50000000), age=(0,200), min_bathrooms=0, min_bedrooms=0, pro
         return []
     summary_expr = re.compile(".*?Now Viewing Results (\d+) \- (\d+) of (\d+).*?", re.DOTALL|re.MULTILINE|re.IGNORECASE|re.UNICODE)
     result = summary_expr.match(str(summaries[0]))
-    if not result:
+    if result:
+        first_result, last_result, total_results = int(result.group(1)), int(result.group(2)), int(result.group(3))
+    elif not result and "Now Viewing Result 1" in str(summaries[0]):
+        first_result, last_result, total_results = 1, 1, 1
+    else:
         logging.error("Couldn't decode result summary")
         return []
-    first_result, last_result, total_results = int(result.group(1)), int(result.group(2)), int(result.group(3))
     logging.info("Search resulted in %d listings", total_results)
     
     results_left = total_results
