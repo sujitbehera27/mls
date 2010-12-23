@@ -1,3 +1,7 @@
+"""
+Finds any data in S3 that hasn't been parsed yet and creates a request
+for it to be parsed by parse.py
+"""
 import boto
 import sys
 import logging
@@ -19,10 +23,13 @@ def get_key(mls):
     
 def main(argv):
     for key in bucket.list():
-        mls = key.key.split("/")[0]
-        if not aws.mls_exists(mls_domain, mls):
+        mls, datestr = key.key.split("/")
+        date = datestr.split(".")[0]
+        print mls, date
+        
+        if not aws.mls_exists(mls_domain, mls, date):
             print "Need to parse %s" % mls
-            msg_body = simplejson.dumps({"mls":mls, "key":key.name, "bucket":bucket.name})
+            msg_body = simplejson.dumps({"mls":mls, "key":key.name, "bucket":bucket.name, "date":date})
             request_msg = parse_queue.new_message(msg_body)
             parse_queue.write(request_msg)
 

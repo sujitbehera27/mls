@@ -11,7 +11,7 @@ APARTMENT=1
 TOWNHOUSE=2
 HOUSE=5
 
-cities = {"VANCOUVER_WEST":9, "BURNABY":11}
+cities = {"VANCOUVER_WEST":9}
 regions = {"VANCOUVER_WEST":(21,22,23,24,26,27,28,29,30,31,32,33,34,35,36, 37,39,40, 41,42,43,44,10105,853)}
 
 proxyList = []
@@ -43,7 +43,7 @@ def find_mls_numbers(html):
     
 # API
 
-def search(price=(0,10000000), age=(0,200), min_bathrooms=0, min_bedrooms=0, property_type=APARTMENT, areas=[], city=None):
+def search(price=(0,50000000), age=(0,200), min_bathrooms=0, min_bedrooms=0, property_type=APARTMENT, areas=[], city=None):
     results = []
     if not city:
         raise Exception("Must specify a city")
