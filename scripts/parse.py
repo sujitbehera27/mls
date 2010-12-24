@@ -24,9 +24,11 @@ mls_domain = sdb.get_domain("mls")
 
 def main(argv):
     log.info("Starting parser")
+    sleeper = aws.Sleeper(5)
     # Loop indefinitely, waiting for messages
     # If a message is available, grab the data to parse out of S3
     while True:
+        sleeper.reset()
         m = parse_queue.read(visibility_timeout=10)
         if m is not None:
             message_data = simplejson.loads(m.get_body())
@@ -66,7 +68,7 @@ def main(argv):
             
             parse_queue.delete_message(m)
         else:
-            time.sleep(5)
+            sleeper.sleep()
 
 if __name__=="__main__":
     logging.basicConfig()

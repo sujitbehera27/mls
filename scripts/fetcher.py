@@ -32,9 +32,11 @@ def main(argv):
     # Loop indefinitely, waiting for messages
     # If a message is available, fetch the data, stick it into s3, delete the message, then continue waiting
     log.info("Starting fetcher")
+    sleeper = aws.Sleeper(5)
     while True:
         m = mls_queue.read(visibility_timeout=10)
         if m is not None:
+            sleeper.reset()
             mls_number = m.get_body()
             log.info("Got request for %s from queue" % mls_number)
             
@@ -53,7 +55,7 @@ def main(argv):
             
             mls_queue.delete_message(m)
         else:
-            time.sleep(5)
+            sleeper.sleep()
 
 if __name__=="__main__":
     logging.basicConfig()

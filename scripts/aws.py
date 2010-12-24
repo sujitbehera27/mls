@@ -1,5 +1,21 @@
 import time
 
+class Sleeper(object):
+    """
+    Sleeps for an increasing amount of time until it is reset
+    """
+    def __init__(self, base_delay):
+        self.base_delay = base_delay
+        self.current_delay = base_delay
+        
+    def reset(self):
+        self.current_delay = self.base_delay
+    
+    def sleep(self):
+        time.sleep(self.current_delay)
+        if self.current_delay < (8*self.base_delay):
+            self.current_delay = self.current_delay * 2
+
 def from_iso(iso_timestamp):
     return time.strptime(iso_timestamp, "%Y-%m-%dT%H:%M:%S")
 
