@@ -9,14 +9,14 @@ import time
 
 
 # Ubuntu 10.04 ebs store
-AMI = 'ami-8c0c5cc9'
+AMI = 'ami-480df921'
 
 def create_ec2_instance():
     regions = boto.ec2.regions()
-    if not confirm("Use the %s region?" % regions[2]):
+    if not confirm("Use the %s region?" % regions[1]):
         print "Regions are %s" %  regions
         abort("Aborting")
-    region = regions[2]
+    region = regions[1]
     
     c = region.connect()
     print "Connection setup"
@@ -38,16 +38,45 @@ def create_ec2_instance():
 
 def list_instances():
     regions = boto.ec2.regions()
-    region = regions[2]
+    region = regions[1]
     
     c = region.connect()
     for res in c.get_all_instances():
         for instance in res.instances:
             print instance.dns_name
+            
+def setup_queues():
+    """
+    Create SQS queues for MLS app
+    """
+    sqs = boto.connect_sqs()
+    sqs.create_queue('mls_parse_requests')
+    sqs.create_queue('mls_fetcher')
     
-
+def setup_buckets():
+    """
+    Create S3 buckets for MLS app
+    """
+    s3 = boto.connect_s3()
+    s3.create_bucket('mls_data.mls.angerilli.ca')
+    
+def setup_domains():
+    """
+    Create SDB domains for MLS app
+    """
+    sdb = boto.connect_sdb()
+    sdb.create_domain("mls_domain")
+    
+def setup_aws():
+    """
+    Sets up various amazon web services for the MLS app
+    """
+    setup_queues()
+    setup_buckets()
+    setup_domains()
+    
 def live():
-    env.hosts = ['ec2-50-18-7-83.us-west-1.compute.amazonaws.com']
+    env.hosts = ['ec2-184-72-160-76.compute-1.amazonaws.com']
     env.user = 'ubuntu'
 
 def prepare_instance():
@@ -88,4 +117,7 @@ def stop_scripts():
     """
     print "*** WARNING ***: This is about to kill all python processes"
     run("killall python")
+    
+def shutdown():
+    sudo("shutdown -h now")
     
