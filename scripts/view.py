@@ -31,13 +31,20 @@ def main(argv):
     parser.add_option("-l", "--list", action="store_true", dest="list", default=False, help="List all entries")
     parser.add_option("-c", "--count", action="store_true", dest="count", default=False, help="Display a count of all entries")
     parser.add_option("-m", "--mls-only", action="store_true", dest="mls_only", default=False, help="Only display MLS numbers")
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False, help="Verbose output")
+    parser.add_option("-f", "--filter", action="store", dest="filter", help="Filter by MLS number")
     (options, args) = parser.parse_args()
 
     if options.list:
-        rs = mls_domain.select("SELECT * FROM mls")
+        if options.filter:
+            rs = mls_domain.select("SELECT * FROM mls WHERE mls='%s'" % options.filter)
+        else:
+            rs = mls_domain.select("SELECT * FROM mls")
         for result in rs:
             if options.mls_only:
                 print result["mls"]
+            elif options.verbose:
+                print result
             else:
                 print format_result(result)
     
