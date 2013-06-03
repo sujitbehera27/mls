@@ -13,7 +13,7 @@ class Sleeper(object):
     
     def sleep(self):
         time.sleep(self.current_delay)
-        if self.current_delay < (8*self.base_delay):
+        if self.current_delay < (64*self.base_delay):
             self.current_delay = self.current_delay * 2
 
 def from_iso(iso_timestamp):
@@ -22,7 +22,7 @@ def from_iso(iso_timestamp):
 def get_iso_timestamp():
     return time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime())
 
-def get_price_list(price_result):
+def get_price_list(price_result, convert_to_float = False):
     price_list = []
     if not isinstance(price_result, list):
         prices = [price_result]
@@ -36,6 +36,9 @@ def get_price_list(price_result):
             price, timestamp = val
         else:
             raise Exception("Unkown val type: %s, %s" % (val, type(val)))
+        if convert_to_float:
+            if isinstance(price, (str, unicode)):
+                price = float(price.replace("$", "").replace(",", ""))
         price_list.append((price, timestamp))
 
     return price_list

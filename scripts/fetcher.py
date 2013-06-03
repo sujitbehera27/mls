@@ -55,6 +55,7 @@ def main(argv):
             
             mls_queue.delete_message(m)
         else:
+            log.info("Sleeping")
             sleeper.sleep()
 
 if __name__=="__main__":

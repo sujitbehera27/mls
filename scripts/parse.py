@@ -28,9 +28,9 @@ def main(argv):
     # Loop indefinitely, waiting for messages
     # If a message is available, grab the data to parse out of S3
     while True:
-        sleeper.reset()
         m = parse_queue.read(visibility_timeout=10)
         if m is not None:
+            sleeper.reset()
             message_data = simplejson.loads(m.get_body())
                 
             log.info("Processing %s with timestamp %s", message_data["mls"], message_data["date"])
@@ -61,6 +61,8 @@ def main(argv):
                 listing_item["city"] = listing.city
                 listing_item["unit"] = listing.unit
                 listing_item["last_seen"] = aws.get_iso_timestamp()
+                if "first_seen" not in listing_item:
+                    listing_item["first_seen"] = aws.get_iso_timestamp()
             listing_item.add_value("prices", (listing.price, message_data["date"]))
             log.debug(listing_item)
             # Don't save it or delete the message while debugging
@@ -68,6 +70,7 @@ def main(argv):
             
             parse_queue.delete_message(m)
         else:
+            log.info("Sleeping")
             sleeper.sleep()
 
 if __name__=="__main__":

@@ -41,6 +41,8 @@ def main(argv):
     for city_name, city_id in realtylink.cities.items():
         for region in realtylink.regions[city_name]:
             for property_type in (realtylink.TOWNHOUSE, realtylink.APARTMENT, realtylink.HOUSE):
+        # for region in (22,):
+        #     for property_type in (2,):        
                 log.info("Searching %s - %s for %s" % (city_name, region, property_type))
                 
                 results = realtylink.search(property_type=property_type, 
@@ -56,8 +58,10 @@ def main(argv):
                         add_count += 1
                     else:
                         result["last_seen"] = aws.get_iso_timestamp()
+                        if "first_seen" not in result:
+                            result["first_seen"] = aws.get_iso_timestamp()
                         result.save()
-                time.sleep(30)
+                time.sleep(15)
     
     log.info("Added %s entries to the parse queue" % add_count)
 

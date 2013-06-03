@@ -6,12 +6,53 @@ import sys
 import logging
 import aws
 import datetime
+import cPickle as pickle
 
 from optparse import OptionParser
 
 sdb = boto.connect_sdb()
 mls_domain = sdb.get_domain("mls")
 
+CACHE = True
+if CACHE:
+    import memcache
+    mc = memcache.Client(['127.0.0.1:11211'])
+
+
+def cached_query(qry):
+    key = str(abs(hash(qry)))
+    if CACHE:
+        pickled_result = mc.get(key)
+    if CACHE and pickled_result:
+        result = pickle.loads(pickled_result)
+    else:
+        print "cache miss for %s" % key
+        result = []
+        for rs in mls_domain.select(qry):
+            row = {}
+            for k,v in rs.items():
+                row[k] = v
+            result.append(row)
+        print "put %s in cache" % key
+        print len(pickle.dumps(result))
+        mc.set(key, pickle.dumps(result))
+    return result
+
+def get_count():
+    rs = cached_query("SELECT COUNT(*) FROM mls")
+    for result in rs:
+        return result["Count"]
+        
+def get_properties():
+    rs = cached_query("SELECT mls, prices, area FROM mls")
+    properties = []
+    for result_row in rs:
+        result_row["prices"] = aws.get_price_list(result_row["prices"], convert_to_float=True)
+        result_row["current_price"] = result_row["prices"][-1]
+        result_row["area"] = float(result_row["area"].replace(" sqft.", ""))
+        properties.append(result_row)
+    return properties    
+        
 
 def format_result(result):
     price_list = aws.get_price_list(result["prices"])
