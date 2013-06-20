@@ -12,7 +12,7 @@ TOWNHOUSE=2
 HOUSE=5
 
 cities = {"VANCOUVER_WEST":9}
-regions = {"VANCOUVER_WEST":(21,22,23,24,26,27,28,29,30,31,32,33,34,35,36, 37,39,40, 41,42,43,44,10105,853)}
+regions = {"VANCOUVER_WEST":(21,22,23,24,26,27,28,29,30,31,32,33,34,35,36,37,39,40, 41,42,43,44,10105,853)}
 
 proxyList = []
 
@@ -20,15 +20,23 @@ def getHttpData(url):
     #proxies = random.choice(proxyList)
     #logging.debug("Using proxy: %s", str(proxies))
     #f = urllib.urlopen(url, proxies=proxies)
+
     f = urllib.urlopen(url)
-    logging.debug("Fetching %s", url)
-    return f.read()
-    
+    # logging.debug("Fetching %s", url)
+    #f = open("test.html", "r")
+
+    data = f.read()
+    return data
+
 def fix_price(price_string):
     return price_string.replace("$","").replace(",","").split(".")[0]
 
 def find_mls_numbers(html):
     results = {}
+
+    # A two step process because the page layout makes it a pain to associate
+    # the address with an MLS number and price as we find it
+    # First pre-process to find the mls numbers + price
     links = html.findAll("a", href=re.compile("Detail.cfm|mortgage.cfm"))
     p = re.compile(".*?MLS\=(\w\d+)", re.DOTALL|re.MULTILINE|re.IGNORECASE|re.UNICODE)
     price_p = re.compile(".*?p\=(.*?)\&.*?mls_num=(\w\d+)")
@@ -38,7 +46,18 @@ def find_mls_numbers(html):
             results[result.group(1)] = None
         result = price_p.match(str(link))
         if result:
-            results[result.group(2)] = result.group(1)
+            results[result.group(2)] = {"price":fix_price(result.group(1)), "mls":result.group(2)}
+
+    # Then, go back through to find the address
+    cells = html.findAll("td", rowspan="2")
+    for cell in cells:
+        try:
+            address = cell.font.string.strip()
+            mls = cell.parent.findNextSibling("tr", align="middle").findAll("td")[0].font.string.strip()
+            results[mls]['address'] = address
+        except Exception as e:
+            print "Error finding address: %s" % e
+
     return results
     
 # API
