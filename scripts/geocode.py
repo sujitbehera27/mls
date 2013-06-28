@@ -72,7 +72,7 @@ def write_to_json(results, filename):
         fp.write(json.dumps(results))
 
 
-def process_redis(processor, redis_addr, key="listings"):
+def process_redis(processor, redis_addr, process_all, key="listings"):
     host, port = redis_addr.split(":")
     port = int(port)
 
@@ -86,12 +86,15 @@ def process_redis(processor, redis_addr, key="listings"):
         data = json.loads(r.hget(key, mls))
         address = data['address'] + ", Vancouver, BC"
         price = data['price']
-        result, error = processor.process_listing(mls, address, price)
-        if error:
-            errors.append(error)
-        else:
-            results.append(result)
-        time.sleep(0.5)
+        if process_all or 'zone' not in data:
+            result, error = processor.process_listing(mls, address, price)
+            if error:
+                errors.append(error)
+            else:
+                data['zone'] = result['zone']
+                r.hset(key, mls, json.dumps(data))
+                results.append(result)
+            time.sleep(0.5)
 
     return results, errors
 
@@ -106,7 +109,7 @@ if __name__ == "__main__":
     ap.add_argument('-r', '--redis', nargs='?', const="localhost:6379",
                     help="Use the given redis server instead of MLS files")
     ap.add_argument('-d', '--dir', help="Directory containing MLS files")
-    ap.add_argument('outputcsv', help="Filename to write the results")
+    ap.add_argument('-o', '--outputcsv', help="Filename to write the results")
     args = ap.parse_args()
 
     if not args.dir and not args.redis:
@@ -122,8 +125,9 @@ if __name__ == "__main__":
     if args.dir:
         results, errors = processor.process_mls_dir(args.dir)
     else:
-        results, errors = process_redis(processor, args.redis)
-    write_to_csv(results, args.outputcsv)
+        results, errors = process_redis(processor, args.redis, args.outputcsv)
+    if args.outputcsv:
+        write_to_csv(results, args.outputcsv)
 
     logging.debug(errors)
 
