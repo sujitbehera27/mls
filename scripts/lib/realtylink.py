@@ -1,36 +1,59 @@
 from BeautifulSoup import BeautifulSoup
 import urllib
-import urllib2
-import random
 import logging
 import re
 
 # Definitions
 # TODO: Add more definitions
-APARTMENT=1
-TOWNHOUSE=2
-HOUSE=5
+APARTMENT = 1
+TOWNHOUSE = 2
+HOUSE = 5
 
-cities = {"VANCOUVER_WEST":9, "VANCOUVER_EAST":10}
-regions = {"VANCOUVER_WEST":(21,22,23,24,26,27,28,29,30,31,32,33,34,35,36,37,39,40, 41,42,43,44,10105,853),
-           "VANCOUVER_EAST":(235,241,432,237,234,244,855,246,240,238,236,243,245,242,233,239,247)}
+cities = {
+    "VANCOUVER_WEST": 9,
+    "VANCOUVER_EAST": 10,
+    "WEST_VANCOUVER": 19,
+    "BURNABY": 11,
+    "COQUITLAM": 16,
+    "MAPLE_RIDGE": 18,
+    "NORTH_VANCOUVER": 20,
+    "NEW_WESTMINSTER": 12,
+    "PITT_MEADOWS": 913,
+    "PORT_MOODY": 15,
+    "PORT_COQUITLAM": 17,
+    "RICHMOND": 13,
+    "LADNER": 852,
+    "TSAWWASSEN": 851
+}
+regions = {
+    "VANCOUVER_WEST": (21, 22, 23, 24, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 39, 40,  41, 42, 43, 44, 10105, 853),
+    "VANCOUVER_EAST": (235, 241, 432, 237, 234, 244, 855, 246, 240, 238, 236, 243, 245, 242, 233, 239, 247),
+    "WEST_VANCOUVER": (506, 944, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390, 391, 392, 434),
+    "BURNABY": (248, 249, 250, 251, 253, 254, 255, 256, 257, 258, 259, 260, 261, 856, 857, 858, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282),
+    "COQUITLAM": (324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 428, 429, 430),
+    "MAPLE_RIDGE": (879, 881, 882, 884, 886, 887, 889, 890, 891, 892, 893, 894, 359),
+    "NORTH_VANCOUVER": (895, 910, 393, 394, 395, 396, 397, 398, 399, 400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418, 419, 420, 421, 422, 423, 424, 425, 426),
+    "NEW_WESTMINSTER": (1539, 1540, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295),
+    "PITT_MEADOWS": (880, 883, 885, 888, 909, 914),
+    "PORT_MOODY": (435, 436, 877, 314, 315, 316, 317, 318, 323, 319, 320, 321, 322),
+    "PORT_COQUITLAM": (1541, 878, 345, 346, 347, 348, 349, 350, 351, 352, 433),
+    "RICHMOND": (915, 916, 917, 918, 919, 920, 921, 922, 923, 924, 925, 926, 927, 928, 929, 930, 931, 932, 933, 934, 935, 936, 937, 938, 939, 940, 941, 942, 943, 310),
+    "TSAWWASSEN": (859, 860, 861, 862, 863, 864, 865, 866),
+    "LADNER": (867, 868, 869, 870, 871, 872, 873, 874, 875, 876)
+}
 
 proxyList = []
 
+
 def getHttpData(url):
-    #proxies = random.choice(proxyList)
-    #logging.debug("Using proxy: %s", str(proxies))
-    #f = urllib.urlopen(url, proxies=proxies)
-
     f = urllib.urlopen(url)
-    # logging.debug("Fetching %s", url)
-    #f = open("test.html", "r")
-
     data = f.read()
     return data
 
+
 def fix_price(price_string):
-    return price_string.replace("$","").replace(",","").split(".")[0]
+    return price_string.replace("$", "").replace(",", "").split(".")[0]
+
 
 def find_mls_numbers(html):
     results = {}
@@ -60,10 +83,10 @@ def find_mls_numbers(html):
             print "Error finding address: %s" % e
 
     return results
-    
-# API
 
-def search(price=(0,50000000), age=(0,200), min_bathrooms=0, min_bedrooms=0, property_type=APARTMENT, areas=[], city=None):
+
+# API
+def search(price=(0, 100000000), age=(0, 200), min_bathrooms=0, min_bedrooms=0, property_type=APARTMENT, areas=[], city=None):
     results = []
     if not city:
         raise Exception("Must specify a city")
@@ -85,8 +108,8 @@ def search(price=(0,50000000), age=(0,200), min_bathrooms=0, min_bedrooms=0, pro
     parameters["MNPRC"] = price[0]
     parameters["MXPRC"] = price[1]
     parameters["SCTP"] = "RS"
-    
-    url = "http://www.realtylink.org/prop_search/Summary.cfm?" + "&".join(["%s=%s" % (k,v) for k,v in parameters.items()])
+
+    url = "http://www.realtylink.org/prop_search/Summary.cfm?" + "&".join(["%s=%s" % (k, v) for k, v in parameters.items()])
     html = getHttpData(url)
     data = BeautifulSoup(html)
     #logging.debug("Summary: %s", unicode(str(data), errors='ignore'))
@@ -109,7 +132,7 @@ def search(price=(0,50000000), age=(0,200), min_bathrooms=0, min_bedrooms=0, pro
         logging.error("Couldn't decode result summary")
         return []
     logging.info("Search resulted in %d listings", total_results)
-    
+
     results_left = total_results
     next_page_index = -4
     while results_left > 0:
