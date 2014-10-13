@@ -17,26 +17,38 @@ test_results = [('V847348', '$788,000.00'), ('V845315', '$749,000.00'), ('V83147
 r = redis.StrictRedis(host='localhost', port=6379, db=0)
 DATA_KEY = 'listings'
 PROCESSED_LIST = 'processed'
+PROCESSING_LIST = 'processing'
+QUEUE_LIST = 'queue'
+
 
 def pad_price(normalized):
     padded = "0" * (8-len(normalized)) + normalized
     return padded
-    
+
+def process_all():
+    for city in realtylink.cities.keys():
+        for property_type in (realtylink.HOUSE, realtylink.TOWNHOUSE, realtylink.APARTMENT):
+            r.lpush('queue', json.dumps((city, property_type)))
+
 def main(argv):
-    add_count = 0
-    
-    already_processed = [int(region) for region in r.lrange(PROCESSED_LIST, 0, r.llen(PROCESSED_LIST))]
-    print already_processed
-    for city_name, city_id in realtylink.cities.items():
+
+    while True:
+        log.info("Waiting for city and dwelling type to process...")
+        to_process = r.brpoplpush(QUEUE_LIST, PROCESSING_LIST)
+        city_name, property_type = json.loads(to_process)
+        city_id = realtylink.cities[city_name]
+
+        # figure out which regions have already been searched. doing it now should be safe, because we're the only ones
+        # who should be looking at this city/dwelling type combo at any given time
+        already_processed = [json.loads(processed) for processed in r.lrange(PROCESSED_LIST, 0, r.llen(PROCESSED_LIST))]
         for region in realtylink.regions[city_name]:
-            if int(region) in already_processed:
-                print "Skipping region %s, it's already been searched" % region
+            if [region, property_type] in already_processed:
+                log.info("Skipping region %s, it's already been searched for property type %s" % (region, property_type))
                 continue
-            property_type = realtylink.HOUSE
             log.info("Searching %s - %s for %s" % (city_name, region, property_type))
-            
-            results = realtylink.search(property_type=property_type, 
-                                        city=city_id, 
+
+            results = realtylink.search(property_type=property_type,
+                                        city=city_id,
                                         areas=[region])
 
             for mls, data in results:
@@ -44,18 +56,18 @@ def main(argv):
                 print mls, normalized_price, data['address']
                 data['city'] = city_id
                 data['region'] = region
+                data['property_type'] = property_type
                 jsonified = json.dumps(data)
                 r.hset(DATA_KEY, mls, jsonified)
-            r.rpush(PROCESSED_LIST, region)
+            r.rpush(PROCESSED_LIST, json.dumps((region, property_type)))
             time.sleep(5)
-    
-    log.info("Added %s entries to the parse queue" % add_count)
+        r.lrem(PROCESSING_LIST, 0, to_process)
 
-if __name__=="__main__":
+if __name__ == "__main__":
     logging.basicConfig()
     for handler in logging.getLogger().handlers:
         handler.setFormatter(logging.Formatter("%(asctime)s %(name)-19s %(levelname)-7s - %(message)s"))
     formatter = logging.Formatter('%(name)s: %(levelname)s %(message)s')
     logging.getLogger().setLevel(logging.INFO)
-    
+
     sys.exit(main(sys.argv))
