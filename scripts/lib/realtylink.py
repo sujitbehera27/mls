@@ -118,7 +118,11 @@ def find_mls_numbers(html):
         try:
             address = cell.font.string.strip()
             mls = cell.parent.findNextSibling("tr", align="middle").findAll("td")[0].font.string.strip()
+            bedrooms = cell.parent.findNextSibling("tr", align="middle").findAll("td")[2].font.string.strip()
+            baths = cell.parent.findNextSibling("tr", align="middle").findAll("td")[3].font.string.strip()
             results[mls]['address'] = address
+            results[mls]['bedrooms'] = bedrooms.replace("&nbsp;", "")
+            results[mls]['baths'] = baths
         except Exception as e:
             print "Error finding address: %s" % e
 
