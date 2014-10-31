@@ -72,7 +72,7 @@ def generate_stats(listings, city=None):
         "median": median(listings, key=keyfunc),
         "count": len(listings),
     }
-    avg_income = AVG_INCOME_BY_CITY[city] if city else AVG_INCOME
+    avg_income = AVG_INCOME_BY_CITY[city] if (city and city in AVG_INCOME_BY_CITY) else AVG_INCOME
     stats['average_multiple'] = stats['average'] / avg_income
     stats['median_multiple'] = stats['median'] / avg_income
     stats['avg_income'] = avg_income
