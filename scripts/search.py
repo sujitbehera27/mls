@@ -48,7 +48,7 @@ def main(argv):
             log.info("Searching %s - %s for %s" % (city_name, region, property_type))
 
             results = realtylink.search(property_type=property_type,
-                                        city=city_id,
+                                        city=city_name,
                                         areas=[region])
 
             for mls, data in results:

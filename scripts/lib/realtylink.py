@@ -23,7 +23,39 @@ cities = {
     "PORT_COQUITLAM": 17,
     "RICHMOND": 13,
     "LADNER": 852,
-    "TSAWWASSEN": 851
+    "TSAWWASSEN": 851,
+    "ABBOTSFORD": 117,
+    "CLOVERDALE": 114,
+    "LANGLEY": 116,
+    "MISSION": 118,
+    "NORTH_DELTA": 111,
+    "NORTH_SURREY": 112,
+    "SURREY": 113,
+    "WHITE_ROCK": 115,
+}
+metro_area = {
+    "VANCOUVER_WEST": "GV",
+    "VANCOUVER_EAST": "GV",
+    "WEST_VANCOUVER": "GV",
+    "BURNABY": "GV",
+    "COQUITLAM": "GV",
+    "MAPLE_RIDGE": "GV",
+    "NORTH_VANCOUVER": "GV",
+    "NEW_WESTMINSTER": "GV",
+    "PITT_MEADOWS": "GV",
+    "PORT_MOODY": "GV",
+    "PORT_COQUITLAM": "GV",
+    "RICHMOND": "GV",
+    "LADNER": "GV",
+    "TSAWWASSEN": "GV",
+    "ABBOTSFORD": "FV",
+    "CLOVERDALE": "FV",
+    "LANGLEY": "FV",
+    "MISSION": "FV",
+    "NORTH_DELTA": "FV",
+    "NORTH_SURREY": "FV",
+    "SURREY": "FV",
+    "WHITE_ROCK": "FV",
 }
 regions = {
     "VANCOUVER_WEST": (21, 22, 23, 24, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 39, 40,  41, 42, 43, 44, 10105, 853),
@@ -39,7 +71,15 @@ regions = {
     "PORT_COQUITLAM": (1541, 878, 345, 346, 347, 348, 349, 350, 351, 352, 433),
     "RICHMOND": (915, 916, 917, 918, 919, 920, 921, 922, 923, 924, 925, 926, 927, 928, 929, 930, 931, 932, 933, 934, 935, 936, 937, 938, 939, 940, 941, 942, 943, 310),
     "TSAWWASSEN": (859, 860, 861, 862, 863, 864, 865, 866),
-    "LADNER": (867, 868, 869, 870, 871, 872, 873, 874, 875, 876)
+    "LADNER": (867, 868, 869, 870, 871, 872, 873, 874, 875, 876),
+    "ABBOTSFORD": (157, 158, 159, 160, 161, 162, 163, 900, 901),
+    "CLOVERDALE": (140, 141, 896),
+    "LANGLEY": (148, 149, 150, 151, 152, 153, 156, 154, 155, 911, 912),
+    "MISSION": (170, 164, 165, 166, 167, 168, 169, 902, 903),
+    "NORTH_DELTA": (119, 120, 121, 122),
+    "NORTH_SURREY": (123, 124, 125, 126, 127, 128, 129, 130),
+    "SURREY": (131, 132, 134, 136, 137, 138, 139),
+    "WHITE_ROCK": (142, 143, 144, 145, 146, 147, 897, 898, 899),
 }
 
 proxyList = []
@@ -90,6 +130,7 @@ def search(price=(0, 100000000), age=(0, 200), min_bathrooms=0, min_bedrooms=0, 
     results = []
     if not city:
         raise Exception("Must specify a city")
+    city_id = cities[city]
     if areas == []:
         areas = [26]
     areas = [str(area) for area in areas]
@@ -97,8 +138,8 @@ def search(price=(0, 100000000), age=(0, 200), min_bathrooms=0, min_bedrooms=0, 
     parameters["RSPP"] = 5
     parameters["AIDL"] = ",".join(areas)
     parameters["SRTB"] = "P_Price"
-    parameters["BCD"] = "GV"
-    parameters["imdp"] = city
+    parameters["BCD"] = metro_area[city]
+    parameters["imdp"] = city_id
     parameters["ERTA"] = "False"
     parameters["MNAGE"] = age[0]
     parameters["MXAGE"] = age[1]
